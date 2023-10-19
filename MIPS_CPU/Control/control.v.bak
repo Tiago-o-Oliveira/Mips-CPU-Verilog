@@ -1,0 +1,64 @@
+module Control (
+	input  [31:0] Instruction, // ProgramMemory 
+	output [23:0] Ctrl
+);
+
+	reg RW;                // Register File RW = 0 (nao escreve) / RW = 1 (escreve)
+	reg [1:0] Alu;         // Alu  0 = ADD / 1 = SUB / 2 = AND / 3 = OR
+	reg Enable_Offset;     // Extend
+	reg Mux_Alu_In;        // Mux Entrada da Alu  1 = Extend / 0 = B
+	reg Mux_Alu_Out;       // Mux Saida da Alu   0 = Multiplicador / 1 = Alu
+	reg Mux_WB;            // Mux Write Back  0 = D / 1 = M
+	reg WR;                // WR da DataMemory  WR = 0 (leitura) / WR = 1 (escrita)
+	reg Hab_MUL;			  // Multiplicador
+	reg [4:0]  Rs;		     // Primeiro registro fonte
+	reg [4:0]  Rt;		     // Segundo registro fonte para instruções do tipo r ou registro destino para instruções do tipo i
+	reg [4:0]  Rd;	        // Registro destino para instruções tipo R
+	
+	
+	assign Ctrl = {RW, Alu, Enable_Offset, Mux_Alu_In, Mux_Alu_Out, Mux_WB, WR, Hab_MUL, Rs, Rt, Rd}; 
+	//             1    2          1            1            1         1     1      1     5   5   5  = 24
+	//             23[22:21]      20            19           18       17    16     15 [14:10][9:5][4:0] 
+	always @ (Instruction)
+	begin
+	Rs = Instruction[25:21];
+	Rt = Instruction[20:16];
+	// Instruções no formato i
+	if(Instruction[31:26] == 4) 	
+	begin// LW
+			RW = 1;            // habilita a escrita no Register File
+			Alu = 0;           // habilita a Soma			
+			Enable_Offset = 1; // habilita o Extend
+			Mux_Alu_In = 1;    // habilita a saida Extend
+			Mux_Alu_Out = 1;   // habilita a saida Alu
+			Mux_WB = 1;        // habilita a saida M
+			WR = 0;            // habilita a leitura na DataMemory
+			Hab_MUL = 0;       // desabilita o MUltiplicador
+			Rd = Rt; 											
+	end
+	
+	else if(Instruction[31:26] == 5) // SW
+	begin
+		RW = 1;
+	end
+	
+	// Instruções no formato R
+	else if(Instruction[31:26] == 3)
+	begin
+		if(Instruction[10:6] == 10 && Instruction[5:0] == 50) //MUL
+		begin
+		end
+		
+		else if(Instruction[10:6] == 10 && Instruction[5:0] == 32) //ADD
+		begin
+		end
+		
+		else if(Instruction[10:6] == 10 && Instruction[5:0] == 34) //SUB
+		begin
+		end
+	end
+	
+	end
+
+
+endmodule 
